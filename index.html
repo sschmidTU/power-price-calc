@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strom Kalkulator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 640px; width: 100%; }
+  h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    color: #38bdf8;
+  }
+  .card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+  label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; }
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #38bdf8; }
+  .row { display: flex; gap: 0.8rem; align-items: end; }
+  .row > div { flex: 1; }
+  .device-row { display: flex; gap: 0.6rem; align-items: end; margin-bottom: 0.6rem; }
+  .device-header { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+  .device-row > div:first-child { flex: 2; }
+  .device-row > div:nth-child(2) { flex: 1; }
+  .device-row > div:last-child { flex: 0 0 auto; }
+  button {
+    padding: 0.55rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-add { background: #38bdf8; color: #0f172a; }
+  .btn-add:hover { background: #7dd3fc; }
+  .btn-remove { background: #ef4444; color: #fff; padding: 0.55rem 0.75rem; }
+  .btn-remove:hover { background: #f87171; }
+  h2 { font-size: 1.1rem; color: #94a3b8; margin-bottom: 0.8rem; }
+  #devices-list { margin-bottom: 0.8rem; }
+
+  .result-card {
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    border: none;
+    text-align: center;
+    padding: 2rem;
+  }
+  .result-card .big { font-size: 2.4rem; font-weight: 700; color: #fff; }
+  .result-card .sub { font-size: 1rem; color: #e0e7ff; margin-top: 0.3rem; }
+  .result-row { display: flex; justify-content: space-around; margin-top: 1.2rem; }
+  .result-row div { text-align: center; }
+  .result-row .val { font-size: 1.3rem; font-weight: 600; }
+  .result-row .lbl { font-size: 0.8rem; color: #c7d2fe; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>&#9889; Strom Kalkulator</h1>
+
+  <div class="card">
+    <label for="price">Strompreis (pro kWh in &euro;)</label>
+    <input type="number" id="price" step="0.01" min="0" value="0.15" oninput="calc()">
+    <label for="price_info"></label><small><i>Optima entspannt: ~0,15€</i></small></label>
+  </div>
+
+  <div class="card">
+    <h2>Geräte</h2>
+    <div class="device-row device-header">
+      <div style="flex:0 0 auto">#</div>
+      <div>Name</div>
+      <div>Watt</div>
+      <div style="visibility:hidden"><button class="btn-remove">✕</button></div>
+    </div>
+    <div id="devices-list"></div>
+    <button class="btn-add" onclick="addDevice()">+ Gerät hinzufügen</button>
+  </div>
+
+  <div class="card">
+    <label>Betriebsdauer</label>
+    <div class="row">
+      <div>
+        <label for="hours">Stunden</label>
+        <input type="number" id="hours" min="0" value="1" oninput="calc()">
+      </div>
+      <div>
+        <label for="minutes">Minuten</label>
+        <input type="number" id="minutes" min="0" max="59" value="0" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card result-card" id="result">
+    <div class="big" id="total-cost">0,00 &euro;</div>
+    <div class="sub">Gesamtkosten</div>
+    <div class="result-row">
+      <div><div class="val" id="total-watt">0 W</div><div class="lbl">Gesamtleistung</div></div>
+      <div><div class="val" id="total-kwh">0 kWh</div><div class="lbl">Verbrauch</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let deviceId = 0;
+
+function addDevice(name = 'LED', watt = '10') {
+  const id = deviceId++;
+  const div = document.createElement('div');
+  div.className = 'device-row';
+  div.id = 'dev-' + id;
+  div.innerHTML = `
+    <div style="flex:0 0 auto;align-self:center;font-weight:600;color:#94a3b8" class="dev-num"></div>
+    <div><input type="text" placeholder="Name" value="${name}" oninput="calc()"></div>
+    <div><input type="number" placeholder="Watt" min="0" value="${watt}" oninput="calc()"></div>
+    <div><button class="btn-remove" onclick="removeDevice(${id})">✕</button></div>`;
+  document.getElementById('devices-list').appendChild(div);
+  renumber();
+  calc();
+}
+
+function removeDevice(id) {
+  document.getElementById('dev-' + id)?.remove();
+  renumber();
+  calc();
+}
+
+function renumber() {
+  document.querySelectorAll('#devices-list .device-row').forEach((row, i) => {
+    row.querySelector('.dev-num').textContent = (i + 1) + '.';
+  });
+}
+
+function calc() {
+  const price = parseFloat(document.getElementById('price').value) || 0;
+  const hours = parseFloat(document.getElementById('hours').value) || 0;
+  const minutes = parseFloat(document.getElementById('minutes').value) || 0;
+  const totalHours = hours + minutes / 60;
+
+  let totalW = 0;
+  document.querySelectorAll('#devices-list .device-row').forEach(row => {
+    totalW += parseFloat(row.querySelectorAll('input')[1].value) || 0;
+  });
+
+  const kwh = (totalW / 1000) * totalHours;
+  const cost = kwh * price;
+
+  document.getElementById('total-watt').textContent = totalW + ' W';
+  document.getElementById('total-kwh').textContent = kwh.toFixed(4) + ' kWh';
+  document.getElementById('total-cost').textContent = cost.toFixed(2).replace('.', ',') + ' €';
+}
+
+// Default LED device
+addDevice('LED', '10');
+</script>
+</body>
+</html>
