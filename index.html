@@ -46,8 +46,9 @@
   .row > div { flex: 1; }
   .device-row { display: flex; gap: 0.6rem; align-items: end; margin-bottom: 0.6rem; }
   .device-header { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
-  .device-row > div:first-child { flex: 2; }
-  .device-row > div:nth-child(2) { flex: 1; }
+  .device-row > div:first-child { flex: 0 0 2rem; }
+  .device-row > div:nth-child(2) { flex: 3; }
+  .device-row > div:nth-child(3) { flex: 1; min-width: 4rem; }
   .device-row > div:last-child { flex: 0 0 auto; }
   button {
     padding: 0.55rem 1rem;
