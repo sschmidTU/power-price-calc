@@ -61,6 +61,8 @@
   }
   .btn-add { background: #38bdf8; color: #0f172a; }
   .btn-add:hover { background: #7dd3fc; }
+  .btn-reset { background: #475569; color: #e2e8f0; }
+  .btn-reset:hover { background: #64748b; }
   .btn-remove { background: #ef4444; color: #fff; padding: 0.55rem 0.75rem; }
   .btn-remove:hover { background: #f87171; }
   h2 { font-size: 1.1rem; color: #94a3b8; margin-bottom: 0.8rem; }
@@ -99,7 +101,10 @@
       <div style="visibility:hidden"><button class="btn-remove">✕</button></div>
     </div>
     <div id="devices-list"></div>
-    <button class="btn-add" onclick="addDevice()">+ Gerät hinzufügen</button>
+    <div style="display:flex;gap:0.5rem">
+      <button class="btn-add" onclick="addDevice()">+ Gerät hinzufügen</button>
+      <button class="btn-reset" onclick="resetDevices()">Zurücksetzen</button>
+    </div>
   </div>
 
   <div class="card">
@@ -156,6 +161,43 @@ function renumber() {
   });
 }
 
+function saveState() {
+  const devices = [];
+  document.querySelectorAll('#devices-list .device-row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    devices.push({ name: inputs[0].value, watt: inputs[1].value });
+  });
+  const state = {
+    price: document.getElementById('price').value,
+    hours: document.getElementById('hours').value,
+    minutes: document.getElementById('minutes').value,
+    devices
+  };
+  localStorage.setItem('strom_kalkulator', JSON.stringify(state));
+}
+
+function loadState() {
+  const raw = localStorage.getItem('strom_kalkulator');
+  if (!raw) { addDevice(); return; }
+  try {
+    const s = JSON.parse(raw);
+    document.getElementById('price').value = s.price;
+    document.getElementById('hours').value = s.hours;
+    document.getElementById('minutes').value = s.minutes;
+    if (s.devices && s.devices.length) {
+      s.devices.forEach(d => addDevice(d.name, d.watt));
+    } else {
+      addDevice();
+    }
+  } catch { addDevice(); }
+}
+
+function resetDevices() {
+  document.getElementById('devices-list').innerHTML = '';
+  deviceId = 0;
+  addDevice();
+}
+
 function calc() {
   const price = parseFloat(document.getElementById('price').value) || 0;
   const hours = parseFloat(document.getElementById('hours').value) || 0;
@@ -173,10 +215,12 @@ function calc() {
   document.getElementById('total-watt').textContent = totalW + ' W';
   document.getElementById('total-kwh').textContent = kwh.toFixed(4) + ' kWh';
   document.getElementById('total-cost').textContent = cost.toFixed(2).replace('.', ',') + ' €';
+
+  saveState();
 }
 
-// Default LED device
-addDevice('LED', '10');
+loadState();
+calc();
 </script>
 </body>
 </html>
